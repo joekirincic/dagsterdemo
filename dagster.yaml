@@ -18,6 +18,11 @@ run_launcher:
   class: DockerRunLauncher
   config:
     env_vars:
+      - DB_HOST 
+      - DB_PORT
+      - DB_NAME
+      - DB_USER
+      - DB_PASSWORD
       - DAGSTER_POSTGRES_USER
       - DAGSTER_POSTGRES_PASSWORD
       - DAGSTER_POSTGRES_DB

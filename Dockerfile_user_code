@@ -5,6 +5,51 @@ RUN pip install \
     dagster-postgres \
     dagster-docker
 
+# Install system dependencies for R
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    g++ \
+    gcc \
+    gfortran \
+    make \
+    libbz2-dev \
+    libcairo2-dev \
+    libcurl4-openssl-dev \
+    libdeflate-dev \
+    libicu-dev \
+    liblzma-dev \
+    libopenblas-dev \
+    libpango1.0-dev \
+    libpcre2-dev \
+    libpng-dev \
+    libreadline-dev \
+    libtiff-dev \
+    libtirpc-dev \
+    libx11-dev \
+    libxt-dev \
+    libzstd-dev \
+    zlib1g-dev \
+    tcl-dev \
+    tk-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install rig for R installation management
+RUN curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-linux-arm64-latest.tar.gz | \
+    tar xz -C /usr/local && \
+    chmod +x /usr/local/bin/rig
+
+# Install latest stable R using rig
+RUN rig add release && \
+    rig system add-pak
+
+# Install dagsterpipes from private GitHub repo using build-time secret
+RUN --mount=type=secret,id=github_pat \
+    GITHUB_PAT=$(cat /run/secrets/github_pat) \
+    R -e "pak::pak(c('joekirincic/dagsterpipes', 'DBI', 'RPostgres'))"
+# RUN R -e "pak::pak('DBI', 'RPostgres')"
+
 # Add code location code
 WORKDIR /opt/dagster/app
 COPY dagsterdemo/ /opt/dagster/app/dagsterdemo

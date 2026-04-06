@@ -4,19 +4,21 @@ services:
   # and event log storage. Depending on the hardware you run this Compose on, you may be able
   # to reduce the interval and timeout in the healthcheck to speed up your `docker-compose up` times.
   postgres:
-    image: postgres:11
+    image: postgres:16
     container_name: postgres
     environment:
-      POSTGRES_USER: "postgres_user"
-      POSTGRES_PASSWORD: "postgres_password"
-      POSTGRES_DB: "postgres_db"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
     networks:
       - dagsterdemo_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres_user -d postgres_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 10s
       timeout: 8s
       retries: 5
+    ports:
+      - "5432:5432"
 
   # This service runs the gRPC server that loads your user code, in both dagster-webserver
   # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
@@ -28,13 +30,20 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile_user_code
+      secrets:
+        - github_pat
     container_name: user_code
     image: user_code_image
     restart: always
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_NAME: "postgres"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DAGSTER_POSTGRES_USER: "postgres"
+      DAGSTER_POSTGRES_PASSWORD: "postgres"
+      DAGSTER_POSTGRES_DB: "postgres"
       DAGSTER_CURRENT_IMAGE: "user_code_image"
     networks:
       - dagsterdemo_network
@@ -60,9 +69,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_POSTGRES_USER: "postgres"
+      DAGSTER_POSTGRES_PASSWORD: "postgres"
+      DAGSTER_POSTGRES_DB: "postgres"
     volumes: # Make docker client accessible so we can terminate containers from the webserver
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -86,9 +95,14 @@ services:
     container_name: dagster_daemon
     restart: on-failure
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"                                                                    
+      DB_NAME: "postgres"
+      DB_USER: "postgres"                                                                
+      DB_PASSWORD: "postgres"
+      DAGSTER_POSTGRES_USER: "postgres"
+      DAGSTER_POSTGRES_PASSWORD: "postgres"
+      DAGSTER_POSTGRES_DB: "postgres"
     volumes: # Make docker client accessible so we can launch containers using host docker
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -104,3 +118,7 @@ networks:
   dagsterdemo_network:
     driver: bridge
     name: dagsterdemo_network
+
+secrets:
+  github_pat:
+    file: ~/.github_pat

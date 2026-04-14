@@ -1,10 +1,8 @@
 library(dagsterpipes)
 library(DBI)
 
-ctx <- open_dagster_pipes()
-
-tryCatch(
-  {
+with_dagster_pipes(
+  function(ctx) {
     ctx$log("Starting ETL process.")
 
     ctx$log("Fetching data from DB.")
@@ -33,11 +31,5 @@ tryCatch(
     )
 
     ctx$log("Process completed.")
-
-    ctx$close()
-  },
-  error = function(e) {
-    ctx$close(exception = e)
-    stop(e)
   }
 )

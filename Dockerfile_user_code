@@ -44,11 +44,7 @@ RUN curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-linux-arm
 RUN rig add release && \
     rig system add-pak
 
-# Install dagsterpipes from private GitHub repo using build-time secret
-RUN --mount=type=secret,id=github_pat \
-    GITHUB_PAT=$(cat /run/secrets/github_pat) \
-    R -e "pak::pak(c('joekirincic/dagsterpipes', 'DBI', 'RPostgres'))"
-# RUN R -e "pak::pak('DBI', 'RPostgres')"
+RUN R -e "pak::pak(c('joekirincic/dagsterpipes', 'DBI', 'RPostgres'))"
 
 # Add code location code
 WORKDIR /opt/dagster/app
